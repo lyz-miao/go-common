@@ -1,4 +1,4 @@
-module library
+module go-common
 
 go 1.17
 

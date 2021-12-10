@@ -1,4 +1,4 @@
-package main
+package sql
 
 import (
 	"database/sql"
@@ -8,12 +8,11 @@ import (
 
 type Config struct {
 	DSN         string
-	Debug       bool
 	MaxOpenConn int
 }
 
 func New(c *Config) (*sql.DB, error) {
-	db, err := sql.Open("mysql", c.DSN)
+	db, err := sql.Open("orm", c.DSN)
 	if err != nil {
 		return nil, err
 	}
