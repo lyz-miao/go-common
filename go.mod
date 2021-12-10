@@ -1,4 +1,4 @@
-module go-common
+module github.com/lyz-miao/go-common
 
 go 1.17
 
