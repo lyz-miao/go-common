@@ -51,35 +51,24 @@ func NewServer(c *ServerConfig) *Server {
 
 func (g *Server) Start() error {
 	log.Printf("gRPC server running in %v", g.listen.Addr().String())
-	return g.server.Serve(g.listen)
+	err := g.server.Serve(g.listen)
+	if err != nil {
+		if !errors.Is(err, googleGrpc.ErrServerStopped) {
+			return err
+		}
+	}
+	return nil
 }
 
 func (g *Server) Close() {
 	log.Printf("gRPC server closed")
-	g.server.Stop()
+	g.server.GracefulStop()
 }
 
 func (g *Server) Server() *googleGrpc.Server {
 	return g.server
 }
 
-// GetServerOutsideListenAddr
-// 用于获取外部应用访问服务时的地址
-func (g *Server) GetServerOutsideListenAddr() (*net.TCPAddr, error) {
-	conn, err := net.Dial("udp", "1.1.1.1:80")
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-	outsideAddr, ok := conn.LocalAddr().(*net.UDPAddr)
-	if !ok {
-		return nil, errors.New("can not find listen addr")
-	}
-
-	n := &net.TCPAddr{
-		IP:   outsideAddr.IP,
-		Port: g.listen.Addr().(*net.TCPAddr).Port,
-	}
-
-	return n, nil
+func (g *Server) Listen() net.Listener {
+	return g.listen
 }

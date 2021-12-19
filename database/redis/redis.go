@@ -6,19 +6,19 @@ import (
 )
 
 type Config struct {
-	DSN string
+    DSN string
 }
 
 func New(c *Config) *redis.Client {
-	o, err := redis.ParseURL(c.DSN)
-    if err != nil{
+    o, err := redis.ParseURL(c.DSN)
+    if err != nil {
         panic(err)
     }
-	r := redis.NewClient(o)
+    r := redis.NewClient(o)
 
-	if err := r.Ping(context.Background()).Err(); err != nil {
-		panic(err)
-	} else {
-		return r
-	}
+    if err = r.Ping(context.Background()).Err(); err != nil {
+        panic(err)
+    } else {
+        return r
+    }
 }

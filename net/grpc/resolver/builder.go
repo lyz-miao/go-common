@@ -13,7 +13,7 @@ type consulBuilder struct {
 func (b *consulBuilder) Build(target resolver.Target, cc resolver.ClientConn, _ resolver.BuildOptions) (resolver.Resolver, error) {
     config := api.DefaultConfig()
     host := os.Getenv("DISCOVER_SERVER")
-    if host != ""{
+    if host != "" {
         config.Address = host
     }
     ctx, cancel := context.WithCancel(context.Background())
@@ -23,7 +23,7 @@ func (b *consulBuilder) Build(target resolver.Target, cc resolver.ClientConn, _ 
         cancel:      cancel,
         cc:          cc,
         config:      *config,
-        serviceName: target.Endpoint,
+        serviceName: target.URL.Host,
     }
 
     go r.watchServices()

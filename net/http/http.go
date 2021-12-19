@@ -1,12 +1,14 @@
 package http
 
 import (
-    "github.com/go-playground/validator/v10"
-    "github.com/labstack/echo/v4"
-    log2 "github.com/labstack/gommon/log"
-    "library/encode"
-    "log"
-    "net"
+	"errors"
+	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
+	log2 "github.com/labstack/gommon/log"
+	"github.com/lyz-miao/go-common/encode"
+	"log"
+	"net"
+	"net/http"
 )
 
 type ServerConfig struct {
@@ -38,25 +40,28 @@ func NewServer(c *ServerConfig) *Server {
 	mereConfig(c)
 
 	app := echo.New()
+	app.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			cc := &Context{c}
+			return next(cc)
+		}
+	})
 	app.Debug = c.DEBUG
 	app.HideBanner = true
 	app.Validator = &CustomValidator{validator: validator.New()}
-    if c.DEBUG{
-        app.Logger.SetLevel(log2.DEBUG)
-    }else {
-        app.Logger.SetLevel(log2.INFO)
-    }
+	if c.DEBUG {
+		app.Logger.SetLevel(log2.DEBUG)
+	} else {
+		app.Logger.SetLevel(log2.INFO)
+	}
 	app.HTTPErrorHandler = func(err error, ctx echo.Context) {
 		if c.DEBUG {
 			err = encode.JSON(ctx, encode.InternalServerError, err.Error())
-			if err != nil {
-				ctx.Logger().Error(err)
-			}
 		} else {
 			err = encode.JSON(ctx, encode.InternalServerError, nil)
-			if err != nil {
-				ctx.Logger().Error(err)
-			}
+		}
+		if err != nil {
+			ctx.Logger().Error(err)
 		}
 
 		ctx.Logger().Error(err)
@@ -75,8 +80,12 @@ func NewServer(c *ServerConfig) *Server {
 }
 
 func (s *Server) Start() error {
-    defer log.Printf("http server closed\n")
-	return s.server.Start("")
+	defer log.Printf("http server closed\n")
+	err := s.server.Start("")
+	if !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
 }
 
 func (s *Server) Server() *echo.Echo {
@@ -84,5 +93,5 @@ func (s *Server) Server() *echo.Echo {
 }
 
 func (s *Server) Close() {
-    s.server.Close()
+	s.server.Close()
 }
