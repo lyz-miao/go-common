@@ -8,17 +8,31 @@ import (
 	"github.com/lyz-miao/go-common/net/http"
 )
 
-type Auth struct {
-	accountService pb.AccountClient
+type Config struct {
+    AuthFunc AuthFunc
 }
 
-func New() *Auth {
-	return &Auth{
+type auth struct {
+	accountService pb.AccountClient
+    authFunc AuthFunc
+}
+
+type AuthFunc func (token string) (*pb.AccessTokenData, error)
+
+func New() *auth {
+	return &auth{
 		accountService: pb.NewGRPCClient(context.Background()),
 	}
 }
 
-func (a *Auth) TokenAuth(next echo.HandlerFunc) echo.HandlerFunc {
+func NewWithConfig(c *Config) *auth {
+	return &auth{
+		accountService: pb.NewGRPCClient(context.Background()),
+        authFunc: c.AuthFunc,
+	}
+}
+
+func (a *auth) TokenAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		c := ctx.(*http.Context)
 		tk := ""
@@ -29,16 +43,27 @@ func (a *Auth) TokenAuth(next echo.HandlerFunc) echo.HandlerFunc {
 			return encode.JSON(c, encode.Unauthorized, nil)
 		}
 
-		rs, err := a.accountService.GetAccessTokenData(context.Background(), &pb.GetAccessTokenDataReq{Token: tk})
-		if err != nil {
-			ctx.Logger().Error(err)
-			return encode.JSON(c, encode.Unauthorized, nil)
-		}
-		if rs.Data == nil {
-			return encode.JSON(c, encode.Unauthorized, nil)
-		}
+        var data *pb.AccessTokenData
+        var err error
 
-		c.SetAccessTokenData(rs.Data)
+        if a.authFunc == nil{
+            r, e := a.accountService.GetAccessTokenData(context.Background(), &pb.GetAccessTokenDataReq{Token: tk})
+            data = r.Data
+            err = e
+        }else {
+            r, e := a.authFunc(tk)
+            err = e
+            data = r
+        }
+        if err != nil {
+            ctx.Logger().Error(err)
+            return encode.JSON(c, encode.Unauthorized, nil)
+        }
+        if data == nil {
+            return encode.JSON(c, encode.Unauthorized, nil)
+        }
+
+		c.SetAccessTokenData(data)
 
 		return next(c)
 	}

@@ -9,7 +9,7 @@ type Context struct {
 	echo.Context
 }
 
-const _accessTokenStoreKey = "_AccessTokenData_"
+const _accessTokenStoreKey = "_ACCESS_TOKEN_DATA_"
 
 func (c *Context) SetAccessTokenData(data *pb.AccessTokenData) {
 	c.Set(_accessTokenStoreKey, data)
