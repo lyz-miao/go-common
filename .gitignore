@@ -13,5 +13,5 @@
 .com.apple.timemachine.donotpresent
 config.toml
 dist/
-test
+test/
 temp/

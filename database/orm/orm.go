@@ -1,7 +1,7 @@
 package orm
 
 import (
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sqlm-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -33,7 +33,7 @@ func New(c *Config) *gorm.DB {
 
 	db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci")
 
-	// 获取通用数据库对象 sql.DB ，然后使用其提供的功能
+	// 获取通用数据库对象 sqlm.DB ，然后使用其提供的功能
 	sqlDB, err := db.DB()
 	if err != nil {
 		panic(err)
